@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Analizar comuna{% endblock %}
+{% block content %}
+<div id="content-wrap">
+    <h1>Analizar comuna</h1>
+    <form class="select-form" method="POST" action="{{ url_for('comuna') }}">
+        <h3>Escoge una comuna con su respectiva cuarentena para generar un análisis automatizado:</h3>
+        <select name="select-comuna" class="seleccionar-comuna">
+            {% for o in data %}
+            <option value="{{ o }}">{{ o }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn">Analizar</button>
+    </form>
+
+    
+</div>
+{% endblock %}

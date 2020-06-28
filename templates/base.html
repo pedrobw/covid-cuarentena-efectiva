@@ -1,0 +1,18 @@
+<!doctype html>
+    <head>
+        <link rel="icon" href="{{ url_for('static', filename='imgs/favicon.ico') }}" type="image/icon type">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Raleway:wght@300&display=swap">
+        <meta charset="utf-8">
+        <title>Efectividad de las cuarentenas en Chile - {% block title %}{% endblock %}</title>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+    </head>
+    <body>
+        <div id="page-container">
+            <div id="navbar">
+                <img src="{{ url_for('static', filename='imgs/logo.png') }}" id="logo"><a href="/">Analizar comuna</a><a href="/consideraciones">Consideraciones</a><a href="/datos">Datos</a><div id="author">Por Pedro B.</div>
+            </div>
+            {% block content %}{% endblock %}
+            <div id="footer">Desarrollado para el <a href="https://www.imfd.cl">Instituto Milenio Fundamento de los Datos (IMFD)</a>.</div>
+          </div>
+    </body>
+</html>
