@@ -81,6 +81,7 @@ def csv_to_db():
     # Base de datos
     dbs[qt]['Fecha de Inicio'] = to_datetime(dbs[qt]['Fecha de Inicio'])
     dbs[qt]['Fecha de Término'] = to_datetime(dbs[qt]['Fecha de Término'])
+    dbs[vd]['Fecha'] = to_datetime(dbs[vd]['Fecha'])
     dbs[qt].to_sql(qt, con=engine, dtype={
         'Fecha de Inicio': DateTime(),
         'Fecha de Término': DateTime(),
@@ -91,13 +92,18 @@ def csv_to_db():
         'Poblacion': Integer()
     })
     dbs[ca].to_sql(ca, con=engine, dtype={
-    'Codigo comuna': Integer(),
-    'Poblacion': Integer()
+        'Codigo comuna': Integer(),
+        'Poblacion': Integer()
     })
 
     dbs[cn].to_sql(cn, con=engine, dtype={
         'Codigo comuna': Integer(),
         'Poblacion': Integer()
+    })
+
+    dbs[vd].to_sql(vd, con=engine, dtype={
+        'Fecha': DateTime(),
+        'Viajes': Integer()
     })
 
 def get_fechas(q_comuna):
@@ -116,7 +122,7 @@ def get_fechas(q_comuna):
     tot_fecha_0 = string_to_date(dia_inicio) + timedelta(days=14)
     tot_fecha_1 = string_to_date(dia_termino)
     tot_fechas = (tot_fecha_0, tot_fecha_1)
-    # Período de cuarentena efectiva
+    # Período de post-cuarentena con efectos residuales
     post_fecha_0 = string_to_date(dia_termino)
     post_fecha_1 = string_to_date(dia_termino) + timedelta(days=7)
     post_fechas = (post_fecha_0, post_fecha_1)
@@ -205,7 +211,10 @@ def interpretar_2(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             {:.1f}%.""".format(
                 100 * (m_post - m_pre)/m_pre
             )
-        elif m_post > 0 and m_post > m_pre:
+        elif m_pre < 0 and m_post > 0:
+            t += """ Por lo demás, se ha pasado de un ritmo de cambio negativo a uno positivo, lo cual puede ser 
+            considerado un total fracaso como cuarentena."""
+        elif m_pre > 0 and m_post > m_pre:
             t += """ Podemos observar además que desde que la cuarentena es plenamente efectiva, el ritmo de 
             aumento de los casos ha empeorado. Más precisamente, se observa una aumento promedio de un 
             {:.1f}%.""".format(
@@ -231,7 +240,10 @@ def interpretar_3(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             {:.1f}%.""".format(
                 100 * (m_post - m_pre)/m_pre
             )
-        elif m_post > 0 and m_post > m_pre:
+        elif m_pre < 0 and m_post > 0:
+            t += """ Por lo demás, se ha pasado de un ritmo de cambio negativo a uno positivo, lo cual puede ser 
+            considerado un total fracaso como cuarentena."""
+        elif m_pre > 0 and m_post > m_pre:
             t += """ Podemos observar además que desde que la cuarentena es plenamente efectiva, el ritmo de 
             aumento de los casos ha empeorado. Más precisamente, se observa una aumento promedio de un 
             {:.1f}%.""".format(
@@ -249,7 +261,7 @@ def interpretar_4(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
     if post_y[1] == 0:
         t += " Se observa además que ya se llegó a los cero casos nuevos, por lo que la cuarentena ha sido un éxito."
     else:
-        t += " Aún no se llega a los cero casos nuevos, por lo que aún no puede decir con plenitud que la cuarentena ha sido un éxito"
+        t += " Aún no se llega a los cero casos nuevos, por lo que aún no puede decir con plenitud que la cuarentena ha sido un éxito."
     if len(pre_fechas_line) > 1 and len(post_fechas_line) > 1:
         m_pre = calcular_pendiente(pre_x, pre_y)
         m_post = calcular_pendiente(post_x, post_y)
@@ -259,7 +271,10 @@ def interpretar_4(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             {:.1f}% su variación promedio.""".format(
                 100 * (m_post - m_pre)/m_pre
             )
-        elif m_post > 0 and m_post > m_pre:
+        elif m_pre < 0 and m_post > 0:
+            t += """ Por lo demás, se ha pasado de un ritmo de cambio negativo a uno positivo, lo cual puede ser 
+            considerado un total fracaso como cuarentena."""
+        elif m_pre > 0 and m_post > m_pre:
             t += """ Además, desde que la cuarentena es plenamente efectiva, el ritmo de 
             aumento de los casos nuevos ha crecido. Más precisamente, ha habido aumento de un 
             {:.1f}% en su variación promedio.""".format(
@@ -279,7 +294,7 @@ def interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
     if post_y[1] == 0:
         t += " Se observa además que ya se llegó a los cero casos nuevos, por lo que la cuarentena ha sido un éxito."
     else:
-        t += " Aún no se llega a los cero casos nuevos, por lo que aún no puede decir con plenitud que la cuarentena ha sido un éxito"
+        t += " Aún no se llega a los cero casos nuevos, por lo que aún no puede decir con plenitud que la cuarentena ha sido un éxito."
     if len(pre_fechas_line) > 1 and len(post_fechas_line) > 1:
         m_pre = calcular_pendiente(pre_x, pre_y)
         m_post = calcular_pendiente(post_x, post_y)
@@ -289,7 +304,10 @@ def interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             {:.1f}% su variación promedio.""".format(
                 100 * (m_post - m_pre)/m_pre
             )
-        elif m_post > 0 and m_post > m_pre:
+        elif m_pre < 0 and m_post > 0:
+            t += """ Por lo demás, se ha pasado de un ritmo de cambio negativo a uno positivo, lo cual puede ser 
+            considerado un total fracaso como cuarentena."""
+        elif m_pre > 0 and m_post > m_pre:
             t += """ Además, desde que la cuarentena es plenamente efectiva, el ritmo de 
             aumento de los casos nuevos ha crecido. Más precisamente, ha habido aumento de un 
             {:.1f}% en su variación promedio.""".format(
@@ -317,7 +335,7 @@ def vis(j):
     plt.xlabel('Time')
     plt.ylabel('Value')
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[j] = True
     return send_file(img, mimetype='image/png')
@@ -357,9 +375,9 @@ def vis0(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(0)
+    fig, ax = plt.subplots()#figure(0)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=20, ha='right')
@@ -384,7 +402,7 @@ def vis0(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[0] = True
     return send_file(img, mimetype='image/png')
@@ -430,9 +448,9 @@ def vis1(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(1)
+    fig, ax = plt.subplots()#figure(1)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -457,7 +475,7 @@ def vis1(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[1] = True
     return send_file(img, mimetype='image/png')
@@ -497,9 +515,9 @@ def vis2(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(2)
+    fig, ax = plt.subplots()#figure(2)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -528,7 +546,7 @@ def vis2(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[2] = True
     return send_file(img, mimetype='image/png')
@@ -574,9 +592,9 @@ def vis3(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(3)
+    fig, ax = plt.subplots()#figure(3)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -604,7 +622,7 @@ def vis3(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[3] = True
     return send_file(img, mimetype='image/png')
@@ -653,9 +671,9 @@ def vis4(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(4)
+    fig, ax = plt.subplots()#figure(4)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -683,7 +701,7 @@ def vis4(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[4] = True
     return send_file(img, mimetype='image/png')
@@ -726,9 +744,9 @@ def vis5(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig = plt.figure(5)
+    fig, ax = plt.subplots()#figure(5)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -756,7 +774,7 @@ def vis5(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[5] = True
     return send_file(img, mimetype='image/png')
@@ -849,9 +867,9 @@ def vis6(sel_comuna):
     tpo_duplicacion = pre_tpo_duplicacion + trans_tpo_duplicacion + tot_tpo_duplicacion + post_tpo_duplicacion
 
     # Plot
-    fig = plt.figure(6)
+    fig, ax = plt.subplots()#figure(6)
     plt.clf()
-    ax = plt.axes()
+    
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
     plt.xticks(rotation=15, ha='right')
@@ -874,7 +892,7 @@ def vis6(sel_comuna):
     )
     plt.legend(prop=font)
     img = BytesIO()
-    fig.savefig(img, dpi=150)
+    fig.savefig(img, dpi=120)
     img.seek(0)
     queue[6] = True
     return send_file(img, mimetype='image/png')
@@ -959,6 +977,7 @@ def comuna_select(select):
         # Conservamos las pendientes porque son idénticas, por escalamiento
         text_1 = interpretar_1(pre_x, pre_y, post_x, post_y)
 
+    dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
     dates = [
         date_headers(ca, pre_fechas),
         date_headers(ca, trans_fechas),
