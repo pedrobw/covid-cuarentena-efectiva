@@ -2,15 +2,38 @@
 {% block title %}Analizar comuna{% endblock %}
 {% block content %}
 <div id="content-wrap">
-    {%if name != 'None' %}
+    {%if name != None %}
     <h1>{{ name }}</h1>
-    <p>Hello world, este es mi primer análisis en modo app.</p>
-    <img src="/vis/1" alt="Gráfico de análisis">     
-    <p>Hola</p>
-    <img src="/vis/2" alt="Gráfico de análisis">
-    <img src="/vis/3" alt="Gráfico de análisis">
+    <div class="subtitle">{{ poblacion }} habitantes</div>
+    <div class="subtitle">{{ dia_inicio }}-{{ dia_termino }}</div>
+    
+    <h3>Descripción de la cuarentena</h3>
+    <p>Alcance: {{ alcance }}</p>
+    <p>Detalle: "{{ descripcion }}"</p>
+    <h2>Indicadores de contagio</h2>
+    <p>En esta primera sección, analizamos 8 indicadores de contagio que permiten hacerse una idea general de qué tan efectivas están siendo las cuarentenas en reducir el contagio de COVID-19. Más que las cifras mismas, nos fijamos en las tendencias de ciertas cifras importantes en los distintos períodos relevantes para una cuarentena. Para más detalles sobre la interpretación de estos indicadores, por favor revisar <a href="/consideraciones">la sección de Consideraciones</a>.</p>
+    <h3>1. Casos confirmados totales</h3>
+    <img src="/vis/0/{{ name }}" alt="Comuna {{ name }} no encontrada"><div class="img-info">{{ text_0 }}</div>
+    <h3>2. Casos confirmados por 100.000 habitantes</h3>
+    <img src="/vis/1/{{ name }}" alt="Comuna {{ name }} no encontrada"><div class="img-info">{{ text_1 }}</div>
+    <h3>3. Casos activos totales</h3>
+    <img src="/vis/2/{{ name }}" alt="Comuna {{ name }} no encontrada">
+    <h3>4. Casos activos por 100.000 habitantes</h3>
+    <img src="/vis/3" alt="Comuna {{ name }} no encontrada">
+    <h3>5. Casos nuevos</h3>
+    <img src="/vis/4" alt="Comuna {{ name }} no encontrada">
+    <h3>6. Casos nuevos por 100.000 habitantes</h3>
+    <img src="/vis/5" alt="Comuna {{ name }} no encontrada">
+    <h3>7. Casos nuevos vs. casos activos</h3>
+    <img src="/vis/6" alt="Comuna {{ name }} no encontrada">
+    <h3>8. Tiempo de duplicación de casos</h3>
+    <img src="/vis/7" alt="Comuna {{ name }} no encontrada">
+    <h3>9. Viajes diarios (origen)</h3>
+    <img src="/vis/8" alt="Comuna {{ name }} no encontrada">
+    <h3>10. Viajes diarios (destino)</h3>
+    <img src="/vis/9" alt="Comuna {{ name }} no encontrada">
     {% else %}
-    <h1>No se ha ingresado ninguna comuna.</h1>
+    <h1>La comuna ingresada no existe en la base de datos.</h1>
     {% endif %}
 </div>
 {% endblock %}

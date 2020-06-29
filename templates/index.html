@@ -4,7 +4,7 @@
 <div id="content-wrap">
     <h1>Analizar comuna</h1>
     <form class="select-form" method="POST" action="{{ url_for('comuna') }}">
-        <h3>Escoge una comuna con su respectiva cuarentena para generar un análisis automatizado:</h3>
+        <span>Escoge una comuna con su respectiva cuarentena para generar un análisis automatizado:</span>
         <select name="select-comuna" class="seleccionar-comuna">
             {% for o in data %}
             <option value="{{ o }}">{{ o }}</option>
