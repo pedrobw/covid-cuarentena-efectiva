@@ -38,7 +38,7 @@ cn = 'Casos nuevos por fecha de inicio de síntomas'
 vd = 'Viajes diarios' # Nota: Solo disponibles en RM
 
 # Letalidad
-dn = 'Decesos nuevos' # Nota: Disponible desde el 14 de junio
+# dn = 'Decesos nuevos' # Nota: Disponible desde el 14 de junio
 
 # Trazabilidad - Nada por comuna
 # Disponibilidad - Nada por comuna
@@ -54,7 +54,7 @@ urls[ca] = 'https://raw.githubusercontent.com/MinCiencia/Datos-COVID19/master/ou
 urls[cn] = 'https://raw.githubusercontent.com/MinCiencia/Datos-COVID19/master/output/producto15/FechaInicioSintomas.csv'
 urls[vd] = 'https://raw.githubusercontent.com/MinCiencia/Datos-COVID19/master/output/producto42/ViajesComunas_std.csv'
 # Letalidad
-urls[dn] = 'https://raw.githubusercontent.com/MinCiencia/Datos-COVID19/master/output/producto38/CasosFallecidosPorComuna.csv'
+# urls[dn] = 'https://raw.githubusercontent.com/MinCiencia/Datos-COVID19/master/output/producto38/CasosFallecidosPorComuna.csv'
 # Trazabilidad - Nada por comuna
 # Disponibilidad - Nada por comuna
 # Otros - Nada por comuna
