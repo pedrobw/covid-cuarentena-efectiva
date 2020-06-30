@@ -22,39 +22,39 @@ p {
 
 h1 {
     text-align: center;
-    padding-top: calc(60px + 5vh);
-    padding-bottom: 1vh;
+    margin-top: calc(60px + 5vh);
+    margin-bottom: 1vh;
     font-size: 3rem;
     margin-left: 10%;
     margin-right: 10%;
-    color: darkred;
+    color: midnightblue;
 }
 
 .subtitle {
     text-align: center;
-    padding-bottom: 1vh;
+    margin-bottom: 1vh;
     font-size: 1.5rem;
     color: gray;    
 }
 
 h2 {
     text-align: left;
-    padding-top: 5vh;
-    padding-bottom: 5vh;
+    margin-top: 5vh;
+    margin-bottom: 5vh;
     font-size: 2.5rem;
     margin-left: 10%;
     margin-right: 10%;
-    color: darkred;
+    color: midnightblue;
 }
 
 h3 {
     text-align: left;
-    padding-top: 5vh;
-    padding-bottom: 1rem;
+    margin-top: 5vh;
+    margin-bottom: 1rem;
     font-size: 2rem;
     margin-left: 10%;
     margin-right: 10%;
-    color: darkred;
+    color: midnightblue;
 }
 
 span {
@@ -82,6 +82,7 @@ img {
     padding-right: 1%;
     padding-top: 1%;
     padding-bottom: 1%;
+    margin-bottom: 1rem;
     line-height: 2rem;
     background: white;
     color: black;
@@ -89,8 +90,13 @@ img {
     
 }
 
+img:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
+    transition: box-shadow 0.3s ease-in-out;
+}
+
 img:hover + .img-info {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.25);
     transition: box-shadow 0.3s ease-in-out;
 }
 
@@ -151,7 +157,7 @@ img:hover + .img-info {
 
 #author {
     background-color: black;
-    color: red;
+    color: lightseagreen;
     font-weight: bold;
     width: calc(25% - 15px);
     display: inline-block;
@@ -179,7 +185,8 @@ img:hover + .img-info {
 }
 
 #footer {
-    color: red;
+    color: lightseagreen;
+    font-weight: bold;
     background-color: black;
     position: absolute;
     bottom: 0;
@@ -195,7 +202,12 @@ img:hover + .img-info {
 a {
     text-decoration: none;
     color: inherit;
+    font-weight: inherit;
     background-color: inherit;
+}
+
+a:hover {
+    text-decoration: underline;
 }
 
 #footer a:visited {
@@ -217,7 +229,7 @@ a {
 select {
     color: white !important;
     background-color: black !important;
-    outline-color: red;
+    outline-color: lightseagreen;
     outline: black;
     padding-right: 10px;
     padding-left: 10px;
@@ -225,7 +237,7 @@ select {
 }
 
 option {
-    color: red;
+    color: lightseagreen;
     background-color: black;
     height: 2rem;
 }
@@ -237,7 +249,7 @@ option {
 
 .btn {
     color: white;
-    background-color: red;
+    background-color: lightseagreen;
     line-height: 3rem;
     padding: 0px 25px 0px 25px;
     font-size: calc(12px + 0.8vw);
