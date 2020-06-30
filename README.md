@@ -10,6 +10,7 @@ Necesitar tener instalado Python3 con su módulo pip, además de las siguientes 
 - SQLAlchemy: ``python -m  pip install SQLAlchemy``
 - Matplotlib: ``python -m pip install matplotlib``
 - Numpy: ``python -m pip install numpy``
+
 (dependiendo de tu configuración, puede que necesites usar el comando ``py`` o ``python3`` para acceder a Python3, pero si estás instalando esto, me imagino que sabes de qué hablo).
 
 ## Ejecución
