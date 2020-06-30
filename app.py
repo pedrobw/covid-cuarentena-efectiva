@@ -78,6 +78,9 @@ def get_csvs():
 dbs = get_csvs()
 
 def csv_to_db():
+    ''' Se llama en cada vista que necesita requests a la db, parece necesario 
+    porque Flask no reconoce la variable como global, a pesar de que en un script 
+    independiente funciona sin problemas'''
     # Base de datos
     dbs[qt]['Fecha de Inicio'] = to_datetime(dbs[qt]['Fecha de Inicio'])
     dbs[qt]['Fecha de Término'] = to_datetime(dbs[qt]['Fecha de Término'])
@@ -320,7 +323,7 @@ def interpretar_4(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             )
     return t
 
-# Confirmados nuevos
+# Confirmados nuevos por 100k hab.
 def interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line):
     t = """La interpretación es idéntica a la de casos nuevos, con la excepción de que se 
     escala el gráfico a la población para tener mejor apreciación relativa a otras comunas demográficamente 
@@ -351,6 +354,96 @@ def interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
             {:.1f}% en su variación promedio.""".format(
                 100 * (m_post - m_pre)/m_pre
             )
+    return t
+
+# Tiempo de duplicación
+def interpretar_6(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line):
+    t = """Se que el tiempo de duplicación {} desde el inicio de la plenitud de la cuarentena, es decir, 
+    el efecto ha sido {}. Además, nótese que el tpo de duplicación final es de {}, cuando el contagio sin 
+    retricciones se duplica en aprox. 2 días, y con medidas básicas, en aprox. 6 días.""".format(
+        "ha disminuido" if post_y[1] < post_y[0] else "ha aumentado" if post_y[1]> post_y[0] else "se ha mantenido",
+        "negativo" if post_y[1] < post_y[0] else "positivo" if post_y[1]> post_y[0] else "neutro",
+        post_y[1]
+    )
+    if len(pre_fechas_line) > 1 and len(post_fechas_line) > 1:
+        m_pre = calcular_pendiente(pre_x, pre_y)
+        m_post = calcular_pendiente(post_x, post_y)
+        if m_post > 0 and m_post < m_pre:
+            t += """ Se agrega que desde que la cuarentena es plenamente efectiva, el ritmo de 
+            duplicación de los casos ha descendido en un 
+            {:.1f}% en su variación promedio.""".format(
+                100 * (m_post - m_pre)/m_pre
+            )
+        elif m_pre < 0 and m_post > 0:
+            t += """ Por lo demás, se ha pasado de un ritmo de cambio negativo a uno positivo, lo cual puede ser 
+            considerado una mejora considerable."""
+        elif m_pre > 0 and m_post > m_pre:
+            t += """ Además, desde que la cuarentena es plenamente efectiva, el ritmo de contagio ha decrecido. 
+            Más precisamente, ha habido aumento de un {:.1f}% en la variación promedio del tiempo de duplicación.""".format(
+                100 * (m_post - m_pre)/m_pre
+            )
+    return t
+
+def interpretar_7(pre_viajes_line, dur_viajes_line, post_viajes_line):
+    if len(pre_viajes_line) > 1:
+        s = "se puede observar que existía una tendencia {} antes de iniciar la cuarentena".format(
+            "al alza" if pre_viajes_line[0] < pre_viajes_line[1] else "a la baja" if pre_viajes_line[0] > pre_viajes_line[1] else "constante"
+        )
+    else:
+        s = "no se puede conocer la tendencia previa a iniciar la cuarentena"
+    if len(dur_viajes_line) > 1:
+        r = "Por otra parte, durante la cuarentena, se aprecia una tendencia más bien {}".format(
+            "al alza" if dur_viajes_line[0] < dur_viajes_line[1] else "a la baja" if dur_viajes_line[0] > dur_viajes_line[1] else "constante"
+        )
+    else:
+        r = "Los datos son insuficientes para determinar lo ocurrido durante la cuarentena"
+    if len(post_viajes_line) > 1:
+        v = " Es interesante notar que en este caso la cuarentena fue levantada y que se observa una tendencia posterior {}.".format(
+            "al alza" if post_viajes_line[0] < post_viajes_line[1] else "a la baja" if post_viajes_line[0] > post_viajes_line[1] else "constante"
+        )
+    else:
+        v = ""
+    if len(pre_viajes_line) > 0 and len(post_viajes_line) > 0:
+        x = 100 * (post_viajes_line[-1] - pre_viajes_line[0]) / pre_viajes_line[0]
+        w = """ Finalmente, obsérvese que desde el primer registro disponible desde dos semanas antes de la cuarentena hasta el fin de la misma, 
+        la circulación ha variado en un {:.1f}%  , lo que es {}.""".format(
+            x,
+            "altamente positivo" if x < -0.5 else "más bien positivo" if x < -0.2 else "poco relevante" if x < 0 else "considerablemente negativo"
+        )
+    else:
+        w = ""
+    t = """Nótese primero con la información disponible, {}. {}.{}{}""".format(s, r, v, w)
+    return t
+
+def interpretar_8(pre_viajes_line, dur_viajes_line, post_viajes_line):
+    if len(pre_viajes_line) > 1:
+        s = "se puede observar que existía una tendencia {} antes de iniciar la cuarentena".format(
+            "al alza" if pre_viajes_line[0] < pre_viajes_line[1] else "a la baja" if pre_viajes_line[0] > pre_viajes_line[1] else "constante"
+        )
+    else:
+        s = "no se puede conocer la tendencia previa a iniciar la cuarentena"
+    if len(dur_viajes_line) > 1:
+        r = "Por otra parte, durante la cuarentena, se aprecia una tendencia más bien {}".format(
+            "al alza" if dur_viajes_line[0] < dur_viajes_line[1] else "a la baja" if dur_viajes_line[0] > dur_viajes_line[1] else "constante"
+        )
+    else:
+        r = "Los datos son insuficientes para determinar lo ocurrido durante la cuarentena"
+    if len(post_viajes_line) > 1:
+        v = " Es interesante notar que en este caso la cuarentena fue levantada y que se observa una tendencia posterior {}.".format(
+            "al alza" if post_viajes_line[0] < post_viajes_line[1] else "a la baja" if post_viajes_line[0] > post_viajes_line[1] else "constante"
+        )
+    else:
+        v = ""
+    if len(pre_viajes_line) > 0 and len(post_viajes_line) > 0:
+        x = 100 * (post_viajes_line[-1] - pre_viajes_line[0]) / pre_viajes_line[0]
+        w = """ Finalmente, obsérvese que desde el primer registro disponible desde dos semanas antes de la cuarentena hasta el fin de la misma, 
+        la circulación ha variado en un {:.1f}%  , lo que es {}.""".format(
+            x,
+            "altamente positivo" if x < -0.5 else "más bien positivo" if x < -0.2 else "poco relevante" if x < 0 else "considerablemente negativo"
+        )
+    else:
+        w = ""
+    t = """Nótese primero con la información disponible, {}. {}.{}{}""".format(s, r, v, w)
     return t
 
 
@@ -619,7 +712,6 @@ def vis5(sel_comuna):
     dates = [SE_headers(cn, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [SE_to_date(i) for i in dates[x]], range(4))
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, cn, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
@@ -717,6 +809,8 @@ def vis6(sel_comuna):
                 break
 
     # Plot
+    if len(pre_tpo_duplicacion + trans_tpo_duplicacion + tot_tpo_duplicacion + post_tpo_duplicacion) == 0:
+        return redirect('/unavailable_data/6')
     img = plot_common_graph(
         n=6,
         ylabel="Tiempo de duplicación (días)",
@@ -871,8 +965,10 @@ def comuna_select(select):
     # Descripción de la cuarentena
     alcance = q_comuna['Alcance']
     descripcion = q_comuna['Detalle']
-    dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
+    # Análisis casos confirmados
+
+    dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
     dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
@@ -904,6 +1000,8 @@ def comuna_select(select):
         # Conservamos las pendientes porque son idénticas, por escalamiento
         text_1 = interpretar_1(pre_x, pre_y, post_x, post_y)
 
+    # Análisis casos actuales
+
     dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
     dates = [date_headers(ca, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
@@ -933,6 +1031,7 @@ def comuna_select(select):
         text_2 = interpretar_2(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
         text_3 = interpretar_3(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
 
+    # Análisis casos nuevos
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
     dates = [SE_headers(cn, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
@@ -963,6 +1062,139 @@ def comuna_select(select):
         text_4 = interpretar_4(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
         text_5 = interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
 
+    # Análisis tpo duplicación
+
+    # Antes de la cuarentena
+    pre_fecha_0 = string_to_date(dia_inicio) + timedelta(days=-21)
+    pre_fecha_1 = string_to_date(dia_inicio)
+    pre_fechas = (pre_fecha_0, pre_fecha_1)
+    # Período de transición
+    trans_fecha_0 = string_to_date(dia_inicio)
+    trans_fecha_1 = string_to_date(dia_inicio) + timedelta(days=14)
+    trans_fechas = (trans_fecha_0, trans_fecha_1)
+    # Período de plena cuarentena
+    tot_fecha_0 = string_to_date(dia_inicio) + timedelta(days=14)
+    tot_fecha_1 = string_to_date(dia_termino)
+    tot_fechas = (tot_fecha_0, tot_fecha_1)
+    # Período de cuarentena efectiva
+    post_fecha_0 = string_to_date(dia_termino)
+    post_fecha_1 = string_to_date(dia_termino) + timedelta(days=7)
+    post_fechas = (post_fecha_0, post_fecha_1)
+
+    dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
+    pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
+    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
+    pre_fechas_line = pre_fechas + trans_fechas
+    post_fechas_line = tot_fechas + post_fechas
+    
+    if len(pre_fechas_line) == 0 or len(post_fechas_line) == 0:
+        text_6 = """No hay suficientes datos desde la instauración de la cuarentena para analizar la evolución de 
+        esta variable."""
+    elif len(post_fechas_line) == 1:
+        text_6 = """No hay suficientes datos desde la instauración de la cuarentena para analizar la evolución de 
+        esta variable. Observe el gráfico para más detalles."""
+    else:
+        base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
+        pre_casos_totales = list(engine.execute(base_query.format(pre_query, ct, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
+        trans_casos_totales = list(engine.execute(base_query.format(trans_query, ct, cod_comuna)).fetchone()) if len(trans_query) > 3 else []
+        tot_casos_totales = list(engine.execute(base_query.format(tot_query, ct, cod_comuna)).fetchone()) if len(tot_query) > 3 else []
+        post_casos_totales = list(engine.execute(base_query.format(post_query, ct, cod_comuna)).fetchone()) if len(post_query) > 3 else []
+        casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
+
+        pre_final_fechas = []
+        pre_tpo_duplicacion = []
+        trans_final_fechas = []
+        trans_tpo_duplicacion = []
+        tot_final_fechas = []
+        tot_tpo_duplicacion = []
+        post_final_fechas = []
+        post_tpo_duplicacion = []
+        min_casos = casos[0]
+        for i in range(len(casos)):
+            curr_caso = casos[i]
+            curr_fecha = fechas[i]
+            if min_casos * 2 > curr_caso:
+                continue
+            for j in range(0, i):
+                prev_caso = casos[j]
+                prev_fecha = fechas[j]
+                if prev_caso * 2 > curr_caso:
+                    if curr_fecha in pre_fechas:
+                        pre_final_fechas.append(curr_fecha)
+                        pre_tpo_duplicacion.append((curr_fecha - prev_fecha).days)
+                    if curr_fecha in trans_fechas:
+                        trans_final_fechas.append(curr_fecha)
+                        trans_tpo_duplicacion.append((curr_fecha - prev_fecha).days)
+                    if curr_fecha in tot_fechas:
+                        tot_final_fechas.append(curr_fecha)
+                        tot_tpo_duplicacion.append((curr_fecha - prev_fecha).days)
+                    if curr_fecha in post_fechas:
+                        post_final_fechas.append(curr_fecha)
+                        post_tpo_duplicacion.append((curr_fecha - prev_fecha).days)
+                    break
+        pre_tpo_duplicacion_line = pre_tpo_duplicacion + trans_tpo_duplicacion
+        post_tpo_duplicacion_line = tot_tpo_duplicacion + post_tpo_duplicacion
+        pre_fechas_line = pre_final_fechas + trans_final_fechas
+        post_fechas_line = tot_final_fechas + post_final_fechas
+        if len(pre_tpo_duplicacion_line) < 2 or len(post_tpo_duplicacion_line) < 2:
+            text_6 = "No existe suficiente información para realizar un análisis acabado (ver gráfico)."
+        else:
+            pre_x = [pre_fechas_line[0], pre_fechas_line[-1]]
+            pre_y = [pre_tpo_duplicacion_line[0], pre_tpo_duplicacion_line[-1]]
+            post_x = [post_fechas_line[0], post_fechas_line[-1]]
+            post_y = [post_tpo_duplicacion_line[0], post_tpo_duplicacion_line[-1]]
+            text_6 = interpretar_6(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
+
+    # Análisis viajes
+
+    _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
+    comunas = engine.execute("SELECT Nombre from '{}' WHERE `Código CUT Comuna`='{}'".format(qt, cod_comuna)).fetchall()
+    comunas = tuple([i[0] for i in comunas])    
+
+    # Viajes donde la comuna es ORIGEN
+    if len(comunas) > 1:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    else:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    viajes = engine.execute(base_query.format(pre_fechas[0], post_fechas[1])).fetchall()
+    fechas = [string_to_date(i[0].split(" ")[0]) for i in viajes]
+    if len(fechas) < 7:
+        text_7 = "No hay información disponible para esta comuna, posiblemente porque solo está para RM."
+    else:
+        viajes = [i[1] for i in viajes]
+        viajes_suma = [sum(viajes[i-7:i])/7 for i in range(7, len(viajes))]
+        fechas = fechas[7:]
+        pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [
+            viajes_suma[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+        ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
+        pre_viajes_line = pre_viajes_desde
+        dur_viajes_line = trans_viajes_desde + tot_viajes_desde
+        post_viajes_line = post_viajes_desde
+        text_7 = interpretar_7(pre_viajes_line, dur_viajes_line, post_viajes_line)
+
+    # Viajes donde la comuna es Destino
+    if len(comunas) > 1:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Destino IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    else:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Destino='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    viajes = engine.execute(base_query.format(pre_fechas[0], post_fechas[1])).fetchall()
+    fechas = [string_to_date(i[0].split(" ")[0]) for i in viajes]
+    if len(fechas) < 7:
+        text_7 = "No hay información disponible para esta comuna, posiblemente porque solo está para RM."
+    else:
+        viajes = [i[1] for i in viajes]
+        viajes_suma = [sum(viajes[i-7:i])/7 for i in range(7, len(viajes))]
+        fechas = fechas[7:]
+        pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [
+            viajes_suma[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+        ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
+        pre_viajes_line = pre_viajes_desde
+        dur_viajes_line = trans_viajes_desde + tot_viajes_desde
+        post_viajes_line = post_viajes_desde
+        text_8 = interpretar_8(pre_viajes_line, dur_viajes_line, post_viajes_line)
+
+
     return render_template(
         'analizar_comuna.html',
         name=select,
@@ -976,7 +1208,10 @@ def comuna_select(select):
         text_2=text_2,
         text_3=text_3,
         text_4=text_4,
-        text_5=text_5
+        text_5=text_5,
+        text_6=text_6,
+        text_7=text_7,
+        text_8=text_8
     )
 
 @app.after_request
