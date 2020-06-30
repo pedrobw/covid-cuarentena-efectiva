@@ -1181,7 +1181,7 @@ def comuna_select(select):
     viajes = engine.execute(base_query.format(pre_fechas[0], post_fechas[1])).fetchall()
     fechas = [string_to_date(i[0].split(" ")[0]) for i in viajes]
     if len(fechas) < 7:
-        text_7 = "No hay información disponible para esta comuna, posiblemente porque solo está para RM."
+        text_8 = "No hay información disponible para esta comuna, posiblemente porque solo está para RM."
     else:
         viajes = [i[1] for i in viajes]
         viajes_suma = [sum(viajes[i-7:i])/7 for i in range(7, len(viajes))]
