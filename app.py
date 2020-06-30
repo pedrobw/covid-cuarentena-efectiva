@@ -316,12 +316,12 @@ def interpretar_5(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_lin
     return t
 
 
-@app.route('/vis/<j>')
-def vis(j):
+@app.route('/test/<j>')
+def test(j):
     global queue
     j = int(j)
     while not queue[j-1]:
-        sleep(0.5)
+        sleep(0.1)
     seed(datetime.now())
     n = 10
     p1 = [randint(0, 10) for _ in range(n)]
@@ -338,6 +338,29 @@ def vis(j):
     fig.savefig(img, dpi=120)
     img.seek(0)
     queue[j] = True
+    return send_file(img, mimetype='image/png')
+
+@app.route('/unavailable_data/<i>')
+def unavailable(i):
+    i = int(i)
+    global queue
+    while not queue[i-1]:
+        sleep(0.1)
+    fig, ax = plt.subplots(num=8)
+    plt.clf()
+    plt.tight_layout()
+    plt.axis('off')
+    ax.set(frame_on=False)
+    plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='off', labelbottom='off')
+    plt.text(0.5, 0.5, "Información no disponible", size= 20, ha="center", va="center", bbox=dict(
+        boxstyle="round",
+        ec=(1., 0.2, 0.2),
+        fc=(1., 0.8, 0.8),
+    ))
+    img = BytesIO()
+    fig.savefig(img, dpi=120)
+    img.seek(0)
+    queue[i] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/0/<sel_comuna>')
@@ -375,7 +398,7 @@ def vis0(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(0)
+    fig, ax = plt.subplots(num=0)
     plt.clf()
     
     plt.tight_layout()
@@ -411,7 +434,7 @@ def vis0(sel_comuna):
 def vis1(sel_comuna):
     global queue
     while not queue[0]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -448,7 +471,7 @@ def vis1(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(1)
+    fig, ax = plt.subplots(num=1)
     plt.clf()
     
     plt.tight_layout()
@@ -484,7 +507,7 @@ def vis1(sel_comuna):
 def vis2(sel_comuna):
     global queue
     while not queue[1]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -515,7 +538,7 @@ def vis2(sel_comuna):
     post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(2)
+    fig, ax = plt.subplots(num=2)
     plt.clf()
     
     plt.tight_layout()
@@ -555,7 +578,7 @@ def vis2(sel_comuna):
 def vis3(sel_comuna):
     global queue
     while not queue[2]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -592,7 +615,7 @@ def vis3(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(3)
+    fig, ax = plt.subplots(num=3)
     plt.clf()
     
     plt.tight_layout()
@@ -631,7 +654,7 @@ def vis3(sel_comuna):
 def vis4(sel_comuna):
     global queue
     while not queue[3]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -671,7 +694,7 @@ def vis4(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(4)
+    fig, ax = plt.subplots(num=4)
     plt.clf()
     
     plt.tight_layout()
@@ -710,7 +733,7 @@ def vis4(sel_comuna):
 def vis5(sel_comuna):
     global queue
     while not queue[4]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -744,7 +767,7 @@ def vis5(sel_comuna):
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots()#figure(5)
+    fig, ax = plt.subplots(num=5)
     plt.clf()
     
     plt.tight_layout()
@@ -783,7 +806,7 @@ def vis5(sel_comuna):
 def vis6(sel_comuna):
     global queue
     while not queue[5]:
-        sleep(0.5)
+        sleep(0.1)
     csv_to_db()
     # Datos de la Cuarentena Seleccionada
     q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
@@ -818,9 +841,6 @@ def vis6(sel_comuna):
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
     fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, ct, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
@@ -828,8 +848,6 @@ def vis6(sel_comuna):
     tot_casos_totales = list(engine.execute(base_query.format(tot_query, ct, cod_comuna)).fetchone()) if len(tot_query) > 3 else []
     post_casos_totales = list(engine.execute(base_query.format(post_query, ct, cod_comuna)).fetchone()) if len(post_query) > 3 else []
     casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
 
     pre_final_fechas = []
     pre_tpo_duplicacion = []
@@ -867,7 +885,7 @@ def vis6(sel_comuna):
     tpo_duplicacion = pre_tpo_duplicacion + trans_tpo_duplicacion + tot_tpo_duplicacion + post_tpo_duplicacion
 
     # Plot
-    fig, ax = plt.subplots()#figure(6)
+    fig, ax = plt.subplots(num=6)
     plt.clf()
     
     plt.tight_layout()
@@ -895,6 +913,154 @@ def vis6(sel_comuna):
     fig.savefig(img, dpi=120)
     img.seek(0)
     queue[6] = True
+    return send_file(img, mimetype='image/png')
+
+@app.route('/vis/7/<sel_comuna>')
+def vis7(sel_comuna):
+    global queue
+    while not queue[6]:
+        sleep(0.1)
+    csv_to_db()
+    # Datos de la Cuarentena Seleccionada
+    q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
+    cod_comuna = q_comuna['Código CUT Comuna']
+
+    _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
+
+    comunas = engine.execute("SELECT Nombre from '{}' WHERE `Código CUT Comuna`='{}'".format(qt, cod_comuna)).fetchall()
+    comunas = tuple([i[0] for i in comunas])
+
+    # Viajes donde la comuna es ORIGEN
+    if len(comunas) > 1:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    else:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    pre_viajes_desde = engine.execute(base_query.format(*pre_fechas)).fetchall()
+    trans_viajes_desde = engine.execute(base_query.format(*trans_fechas)).fetchall()
+    tot_viajes_desde = engine.execute(base_query.format(*tot_fechas)).fetchall()
+    post_viajes_desde = engine.execute(base_query.format(*post_fechas)).fetchall()
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i[0].split(" ")[0]) for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
+    if len(fechas) < 7:
+        return redirect('/unavailable_data/7')
+    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [i[1] for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [i for i in x if i < fechas[-7]])
+    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [sum(x[i - 7: i])/7 for i in range(7, len(x))], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    t0 = min(fechas)
+    pre_fechas_line = pre_fechas + trans_fechas
+    post_fechas_line = tot_fechas + post_fechas
+
+    pre_viajes_line = pre_viajes_desde + trans_viajes_desde
+    post_viajes_line = tot_viajes_desde + post_viajes_desde
+    viajes = pre_viajes_desde + trans_viajes_desde + tot_viajes_desde + post_viajes_desde
+
+    # Plot
+    fig, ax = plt.subplots(num=7)
+    plt.clf()
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
+    plt.xticks(rotation=15, ha='right')
+    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
+    ax.set_facecolor('whitesmoke')
+    plt.margins(x=0, y=0, tight=True)
+    plt.scatter(pre_fechas, pre_viajes_desde, color='red', label='Antes de la cuarentena')
+    plt.scatter(trans_fechas, trans_viajes_desde, color='orange', label='Principios de la cuarentena')
+    plt.scatter(tot_fechas, tot_viajes_desde, color='green', label='Plena cuarentena')
+    plt.scatter(post_fechas, post_viajes_desde, color='blue', label='Post cuarentena')
+    try:
+        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_viajes_line[0], pre_viajes_line[-1]], color='red', linestyle=':')
+        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_viajes_line[0], post_viajes_line[-1]], color='blue', linestyle=':')
+    except:
+        pass
+    hfont = {'fontname':'Microsoft Yi Baiti'}
+    plt.xlabel('Fecha', **hfont)
+    plt.ylabel(cn, **hfont)
+    plt.ylim(0, top=max(viajes) + 10)
+    plt.xlim(
+        left=t0 + timedelta(-1),
+        right=max(fechas) + timedelta(1))
+    font = font_manager.FontProperties(
+        family='Microsoft Yi Baiti'
+    )
+    plt.legend(prop=font)
+    img = BytesIO()
+    fig.savefig(img, dpi=120)
+    img.seek(0)
+    queue[7] = True
+    return send_file(img, mimetype='image/png')
+
+@app.route('/vis/8/<sel_comuna>')
+def vis8(sel_comuna):
+    global queue
+    while not queue[7]:
+        sleep(0.1)
+    csv_to_db()
+    # Datos de la Cuarentena Seleccionada
+    q_comuna = engine.execute("SELECT * from '{}' WHERE Nombre='{}';".format(qt, sel_comuna)).fetchone()
+    cod_comuna = q_comuna['Código CUT Comuna']
+
+    _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
+
+    comunas = engine.execute("SELECT Nombre from '{}' WHERE `Código CUT Comuna`='{}'".format(qt, cod_comuna)).fetchall()
+    comunas = tuple([i[0] for i in comunas])
+
+    # Viajes donde la comuna es ORIGEN
+    if len(comunas) > 1:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    else:
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    pre_viajes_desde = engine.execute(base_query.format(*pre_fechas)).fetchall()
+    trans_viajes_desde = engine.execute(base_query.format(*trans_fechas)).fetchall()
+    tot_viajes_desde = engine.execute(base_query.format(*tot_fechas)).fetchall()
+    post_viajes_desde = engine.execute(base_query.format(*post_fechas)).fetchall()
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i[0].split(" ")[0]) for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
+    if len(fechas) < 7:
+        return redirect('/unavailable_data/8')
+    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [i[1] for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [i for i in x if i < fechas[-7]])
+    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [sum(x[i - 7: i])/7 for i in range(7, len(x))], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
+    t0 = min(fechas)
+    pre_fechas_line = pre_fechas + trans_fechas
+    post_fechas_line = tot_fechas + post_fechas
+
+    pre_viajes_line = pre_viajes_desde + trans_viajes_desde
+    post_viajes_line = tot_viajes_desde + post_viajes_desde
+    viajes = pre_viajes_desde + trans_viajes_desde + tot_viajes_desde + post_viajes_desde
+
+    # Plot
+    fig, ax = plt.subplots(num=8)
+    plt.clf()
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
+    plt.xticks(rotation=15, ha='right')
+    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
+    ax.set_facecolor('whitesmoke')
+    plt.margins(x=0, y=0, tight=True)
+    plt.scatter(pre_fechas, pre_viajes_desde, color='red', label='Antes de la cuarentena')
+    plt.scatter(trans_fechas, trans_viajes_desde, color='orange', label='Principios de la cuarentena')
+    plt.scatter(tot_fechas, tot_viajes_desde, color='green', label='Plena cuarentena')
+    plt.scatter(post_fechas, post_viajes_desde, color='blue', label='Post cuarentena')
+    try:
+        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_viajes_line[0], pre_viajes_line[-1]], color='red', linestyle=':')
+        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_viajes_line[0], post_viajes_line[-1]], color='blue', linestyle=':')
+    except:
+        pass
+    hfont = {'fontname':'Microsoft Yi Baiti'}
+    plt.xlabel('Fecha', **hfont)
+    plt.ylabel(cn, **hfont)
+    plt.ylim(0, top=max(viajes) + 10)
+    plt.xlim(
+        left=t0 + timedelta(-1),
+        right=max(fechas) + timedelta(1))
+    font = font_manager.FontProperties(
+        family='Microsoft Yi Baiti'
+    )
+    plt.legend(prop=font)
+    img = BytesIO()
+    fig.savefig(img, dpi=120)
+    img.seek(0)
+    queue[8] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/')
@@ -1024,8 +1190,6 @@ def comuna_select(select):
     trans_fechas = [SE_to_date(i) for i in dates[1]]
     tot_fechas = [SE_to_date(i) for i in dates[2]]
     post_fechas = [SE_to_date(i) for i in dates[3]]
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
     pre_fechas_line = pre_fechas + trans_fechas
     post_fechas_line = tot_fechas + post_fechas
 
