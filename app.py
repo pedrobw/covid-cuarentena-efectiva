@@ -155,6 +155,44 @@ def headers_to_col_query(l):
 def calcular_pendiente(x, y):
     return (y[1] - y[0]) / ((x[1] - x[0]).days + 0.000001)
 
+def plot_common_graph(n, ylabel, pre_x, trans_x, tot_x, post_x, pre_y, trans_y, tot_y, post_y):
+    pre_x_line = pre_x + trans_x
+    post_x_line = tot_x + post_x
+    x = pre_x_line + post_x_line
+    pre_y_line = pre_y + trans_y
+    post_y_line = tot_y + post_y
+    y = pre_y_line + post_y_line
+    hfont = {'fontname':'Microsoft Yi Baiti'}
+    font = font_manager.FontProperties(family='Microsoft Yi Baiti')
+    fig, ax = plt.subplots(num=n)
+    plt.clf()
+    plt.tight_layout()
+    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
+    plt.xticks(rotation=15, ha='right')
+    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
+    ax.set_facecolor('whitesmoke')
+    plt.margins(x=0, y=0, tight=True)
+    plt.xlabel('Fecha', **hfont)
+    plt.ylabel(ylabel, **hfont)
+    plt.ylim(0, top=max(y) + 10)
+    plt.xlim(left=x[0] + timedelta(-1), right=max(x) + timedelta(1))
+    font = font_manager.FontProperties(family='Microsoft Yi Baiti')
+    plt.scatter(pre_x, pre_y, color='red', label='Antes de la cuarentena')
+    plt.scatter(trans_x, trans_y, color='orange', label='Principios de la cuarentena')
+    plt.scatter(tot_x, tot_y, color='green', label='Plena cuarentena')
+    plt.scatter(post_x, post_y, color='blue', label='Post cuarentena')
+    plt.legend(prop=font)
+    try:
+        plt.plot([pre_x_line[0], pre_x_line[-1]], [pre_y_line[0], pre_y_line[-1]], color='red', linestyle=':')
+        plt.plot([post_x_line[0], post_x_line[-1]], [post_y_line[0], post_y_line[-1]], color='blue', linestyle=':')
+    except:
+        pass
+    img = BytesIO()
+    fig.savefig(img, dpi=120)
+    img.seek(0)
+    queue[n] = True
+    return img
+
 # Interpretaciones de los resultados
 
 # Confirmados totales
@@ -375,59 +413,29 @@ def vis0(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        date_headers(ct, pre_fechas),
-        date_headers(ct, trans_fechas),
-        date_headers(ct, tot_fechas),
-        date_headers(ct, post_fechas)
-    ]
+    dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, ct, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
     trans_casos_totales = list(engine.execute(base_query.format(trans_query, ct, cod_comuna)).fetchone()) if len(trans_query) > 3 else []
     tot_casos_totales = list(engine.execute(base_query.format(tot_query, ct, cod_comuna)).fetchone()) if len(tot_query) > 3 else []
     post_casos_totales = list(engine.execute(base_query.format(post_query, ct, cod_comuna)).fetchone()) if len(post_query) > 3 else []
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=0)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=20, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-    plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel('Casos totales confirmados', **hfont)
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=0,
+        ylabel=ct,
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[0] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/1/<sel_comuna>')
@@ -442,18 +450,9 @@ def vis1(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        date_headers(ct, pre_fechas),
-        date_headers(ct, trans_fechas),
-        date_headers(ct, tot_fechas),
-        date_headers(ct, post_fechas)
-    ]
+    dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, ct, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
@@ -466,41 +465,20 @@ def vis1(sel_comuna):
     trans_casos_totales = [100000 * i / poblacion for i in trans_casos_totales]
     tot_casos_totales = [100000 * i / poblacion for i in tot_casos_totales]
     post_casos_totales = [100000 * i / poblacion for i in post_casos_totales]
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=1)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-    plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel('Casos confirmados por 100.000 hab.', **hfont)
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=1,
+        ylabel="Casos confirmados por 100k hab.",
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[1] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/2/<sel_comuna>')
@@ -515,63 +493,29 @@ def vis2(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        date_headers(ca, pre_fechas),
-        date_headers(ca, trans_fechas),
-        date_headers(ca, tot_fechas),
-        date_headers(ca, post_fechas)
-    ]
+    dates = [date_headers(ca, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, ca, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
     trans_casos_totales = list(engine.execute(base_query.format(trans_query, ca, cod_comuna)).fetchone()) if len(trans_query) > 3 else []
     tot_casos_totales = list(engine.execute(base_query.format(tot_query, ca, cod_comuna)).fetchone()) if len(tot_query) > 3 else []
     post_casos_totales = list(engine.execute(base_query.format(post_query, ca, cod_comuna)).fetchone()) if len(post_query) > 3 else []
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=2)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(ca, **hfont)
-    
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=2,
+        ylabel=ca,
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[2] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/3/<sel_comuna>')
@@ -586,18 +530,9 @@ def vis3(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        date_headers(ca, pre_fechas),
-        date_headers(ca, trans_fechas),
-        date_headers(ca, tot_fechas),
-        date_headers(ca, post_fechas)
-    ]
+    dates = [date_headers(ca, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, ca, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
@@ -610,44 +545,20 @@ def vis3(sel_comuna):
     trans_casos_totales = [100000 * i / poblacion for i in trans_casos_totales]
     tot_casos_totales = [100000 * i / poblacion for i in tot_casos_totales]
     post_casos_totales = [100000 * i / poblacion for i in post_casos_totales]
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=3)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(ca + " por 100.000 hab.", **hfont)
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=3,
+        ylabel=ca + " por 100k hab.",
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[3] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/4/<sel_comuna>')
@@ -662,21 +573,9 @@ def vis4(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        SE_headers(cn, pre_fechas),
-        SE_headers(cn, trans_fechas),
-        SE_headers(cn, tot_fechas),
-        SE_headers(cn, post_fechas)
-    ]
+    dates = [SE_headers(cn, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
-    pre_fechas = [SE_to_date(i) for i in dates[0]]
-    trans_fechas = [SE_to_date(i) for i in dates[1]]
-    tot_fechas = [SE_to_date(i) for i in dates[2]]
-    post_fechas = [SE_to_date(i) for i in dates[3]]
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [SE_to_date(i) for i in dates[x]], range(4))
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, cn, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
@@ -689,44 +588,20 @@ def vis4(sel_comuna):
     trans_casos_totales = [100000 * i / poblacion for i in trans_casos_totales]
     tot_casos_totales = [100000 * i / poblacion for i in tot_casos_totales]
     post_casos_totales = [100000 * i / poblacion for i in post_casos_totales]
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=4)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(cn, **hfont)
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=4,
+        ylabel=cn,
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[4] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/5/<sel_comuna>')
@@ -741,65 +616,30 @@ def vis5(sel_comuna):
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        SE_headers(cn, pre_fechas),
-        SE_headers(cn, trans_fechas),
-        SE_headers(cn, tot_fechas),
-        SE_headers(cn, post_fechas)
-    ]
+    dates = [SE_headers(cn, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
-    pre_fechas = [SE_to_date(i) for i in dates[0]]
-    trans_fechas = [SE_to_date(i) for i in dates[1]]
-    tot_fechas = [SE_to_date(i) for i in dates[2]]
-    post_fechas = [SE_to_date(i) for i in dates[3]]
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [SE_to_date(i) for i in dates[x]], range(4))
     fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
 
     base_query = "SELECT {} from '{}' WHERE `Codigo comuna`='{}'"
     pre_casos_totales = list(engine.execute(base_query.format(pre_query, cn, cod_comuna)).fetchone()) if len(pre_query) > 3 else []
     trans_casos_totales = list(engine.execute(base_query.format(trans_query, cn, cod_comuna)).fetchone()) if len(trans_query) > 3 else []
     tot_casos_totales = list(engine.execute(base_query.format(tot_query, cn, cod_comuna)).fetchone()) if len(tot_query) > 3 else []
     post_casos_totales = list(engine.execute(base_query.format(post_query, cn, cod_comuna)).fetchone()) if len(post_query) > 3 else []
-    pre_casos_line = pre_casos_totales + trans_casos_totales
-    post_casos_line = tot_casos_totales + post_casos_totales
-    casos = pre_casos_totales + trans_casos_totales + tot_casos_totales + post_casos_totales
 
     # Plot
-    fig, ax = plt.subplots(num=5)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_casos_totales, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_casos_totales, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_casos_totales, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_casos_totales, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_casos_line[0], pre_casos_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_casos_line[0], post_casos_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(cn + ' por 100.000 hab.', **hfont)
-    plt.ylim(0, top=max(casos) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=5,
+        ylabel=cn + " por 100k hab.",
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_casos_totales,
+        trans_y=trans_casos_totales,
+        tot_y=tot_casos_totales,
+        post_y=post_casos_totales
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[5] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/6/<sel_comuna>')
@@ -832,12 +672,7 @@ def vis6(sel_comuna):
     post_fecha_1 = string_to_date(dia_termino) + timedelta(days=7)
     post_fechas = (post_fecha_0, post_fecha_1)
 
-    dates = [
-        date_headers(ct, pre_fechas),
-        date_headers(ct, trans_fechas),
-        date_headers(ct, tot_fechas),
-        date_headers(ct, post_fechas)
-    ]
+    dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
     fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
@@ -881,38 +716,19 @@ def vis6(sel_comuna):
                     post_tpo_duplicacion.append((curr_fecha - prev_fecha).days)
                 break
 
-    final_fechas = pre_final_fechas + trans_final_fechas + tot_final_fechas + post_final_fechas
-    tpo_duplicacion = pre_tpo_duplicacion + trans_tpo_duplicacion + tot_tpo_duplicacion + post_tpo_duplicacion
-
     # Plot
-    fig, ax = plt.subplots(num=6)
-    plt.clf()
-    
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_final_fechas, pre_tpo_duplicacion, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_final_fechas, trans_tpo_duplicacion, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_final_fechas, tot_tpo_duplicacion, color='green', label='Plena cuarentena')
-    plt.scatter(post_final_fechas, post_tpo_duplicacion, color='blue', label='Post cuarentena')
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel('Tiempo de duplicación (días)', **hfont)
-    plt.ylim(0, top=max(tpo_duplicacion) + 10)
-    plt.xlim(
-        left=final_fechas[0] + timedelta(-1),
-        right=max(final_fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=6,
+        ylabel="Tiempo de duplicación (días)",
+        pre_x=pre_final_fechas,
+        trans_x=trans_final_fechas,
+        tot_x=tot_final_fechas,
+        post_x=post_final_fechas,
+        pre_y=pre_tpo_duplicacion,
+        trans_y=trans_tpo_duplicacion,
+        tot_y=tot_tpo_duplicacion,
+        post_y=post_tpo_duplicacion
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[6] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/7/<sel_comuna>')
@@ -935,58 +751,33 @@ def vis7(sel_comuna):
         base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
     else:
         base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
-    pre_viajes_desde = engine.execute(base_query.format(*pre_fechas)).fetchall()
-    trans_viajes_desde = engine.execute(base_query.format(*trans_fechas)).fetchall()
-    tot_viajes_desde = engine.execute(base_query.format(*tot_fechas)).fetchall()
-    post_viajes_desde = engine.execute(base_query.format(*post_fechas)).fetchall()
-    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i[0].split(" ")[0]) for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
+    viajes = engine.execute(base_query.format(pre_fechas[0], post_fechas[1])).fetchall()
+    fechas = [string_to_date(i[0].split(" ")[0]) for i in viajes]
     if len(fechas) < 7:
         return redirect('/unavailable_data/7')
-    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [i[1] for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [i for i in x if i < fechas[-7]])
-    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [sum(x[i - 7: i])/7 for i in range(7, len(x))], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
-
-    pre_viajes_line = pre_viajes_desde + trans_viajes_desde
-    post_viajes_line = tot_viajes_desde + post_viajes_desde
-    viajes = pre_viajes_desde + trans_viajes_desde + tot_viajes_desde + post_viajes_desde
+    viajes = [i[1] for i in viajes]
+    viajes_suma = [sum(viajes[i-7:i])/7 for i in range(7, len(viajes))]
+    fechas = fechas[7:]
+    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [
+        viajes_suma[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+    ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [
+        fechas[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+    ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
 
     # Plot
-    fig, ax = plt.subplots(num=7)
-    plt.clf()
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_viajes_desde, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_viajes_desde, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_viajes_desde, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_viajes_desde, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_viajes_line[0], pre_viajes_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_viajes_line[0], post_viajes_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(cn, **hfont)
-    plt.ylim(0, top=max(viajes) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=7,
+        ylabel=vd + "(Origen, prom. 7 días)",
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_viajes_desde,
+        trans_y=trans_viajes_desde,
+        tot_y=tot_viajes_desde,
+        post_y=post_viajes_desde
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[7] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/vis/8/<sel_comuna>')
@@ -1004,63 +795,38 @@ def vis8(sel_comuna):
     comunas = engine.execute("SELECT Nombre from '{}' WHERE `Código CUT Comuna`='{}'".format(qt, cod_comuna)).fetchall()
     comunas = tuple([i[0] for i in comunas])
 
-    # Viajes donde la comuna es ORIGEN
+    # Viajes donde la comuna es DESTINO
     if len(comunas) > 1:
-        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Destino IN {}".format(vd, comunas) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
     else:
-        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Origen='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
-    pre_viajes_desde = engine.execute(base_query.format(*pre_fechas)).fetchall()
-    trans_viajes_desde = engine.execute(base_query.format(*trans_fechas)).fetchall()
-    tot_viajes_desde = engine.execute(base_query.format(*tot_fechas)).fetchall()
-    post_viajes_desde = engine.execute(base_query.format(*post_fechas)).fetchall()
-    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i[0].split(" ")[0]) for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    fechas = pre_fechas + trans_fechas + tot_fechas + post_fechas
+        base_query = "SELECT Fecha, SUM(Viajes) from '{}' WHERE Destino='{}'".format(vd, comunas[0]) + " AND Fecha >= '{}' AND FECHA <= '{}' GROUP BY Fecha"
+    viajes = engine.execute(base_query.format(pre_fechas[0], post_fechas[1])).fetchall()
+    fechas = [string_to_date(i[0].split(" ")[0]) for i in viajes]
     if len(fechas) < 7:
-        return redirect('/unavailable_data/8')
-    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [i[1] for i in x], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [i for i in x if i < fechas[-7]])
-    pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde = map(lambda x: [sum(x[i - 7: i])/7 for i in range(7, len(x))], [pre_viajes_desde, trans_viajes_desde, tot_viajes_desde, post_viajes_desde])
-    t0 = min(fechas)
-    pre_fechas_line = pre_fechas + trans_fechas
-    post_fechas_line = tot_fechas + post_fechas
-
-    pre_viajes_line = pre_viajes_desde + trans_viajes_desde
-    post_viajes_line = tot_viajes_desde + post_viajes_desde
-    viajes = pre_viajes_desde + trans_viajes_desde + tot_viajes_desde + post_viajes_desde
+        return redirect('/unavailable_data/7')
+    viajes = [i[1] for i in viajes]
+    viajes_suma = [sum(viajes[i-7:i])/7 for i in range(7, len(viajes))]
+    fechas = fechas[7:]
+    pre_viajes_hacia, trans_viajes_hacia, tot_viajes_hacia, post_viajes_hacia = map(lambda x: [
+        viajes_suma[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+    ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [
+        fechas[i] for i in range(len(fechas)) if fechas[i] >= x[0] and fechas[i] <= x[1]
+    ], [pre_fechas, trans_fechas, tot_fechas, post_fechas])
 
     # Plot
-    fig, ax = plt.subplots(num=8)
-    plt.clf()
-    plt.tight_layout()
-    plt.gcf().subplots_adjust(bottom=0.15, left=0.15)
-    plt.xticks(rotation=15, ha='right')
-    ax.tick_params(axis='both', which='major', labelsize=8, grid_color='white')
-    ax.set_facecolor('whitesmoke')
-    plt.margins(x=0, y=0, tight=True)
-    plt.scatter(pre_fechas, pre_viajes_desde, color='red', label='Antes de la cuarentena')
-    plt.scatter(trans_fechas, trans_viajes_desde, color='orange', label='Principios de la cuarentena')
-    plt.scatter(tot_fechas, tot_viajes_desde, color='green', label='Plena cuarentena')
-    plt.scatter(post_fechas, post_viajes_desde, color='blue', label='Post cuarentena')
-    try:
-        plt.plot([pre_fechas_line[0], pre_fechas_line[-1]], [pre_viajes_line[0], pre_viajes_line[-1]], color='red', linestyle=':')
-        plt.plot([post_fechas_line[0], post_fechas_line[-1]], [post_viajes_line[0], post_viajes_line[-1]], color='blue', linestyle=':')
-    except:
-        pass
-    hfont = {'fontname':'Microsoft Yi Baiti'}
-    plt.xlabel('Fecha', **hfont)
-    plt.ylabel(cn, **hfont)
-    plt.ylim(0, top=max(viajes) + 10)
-    plt.xlim(
-        left=t0 + timedelta(-1),
-        right=max(fechas) + timedelta(1))
-    font = font_manager.FontProperties(
-        family='Microsoft Yi Baiti'
+    img = plot_common_graph(
+        n=8,
+        ylabel=vd + "(Destino, prom. 7 días)",
+        pre_x=pre_fechas,
+        trans_x=trans_fechas,
+        tot_x=tot_fechas,
+        post_x=post_fechas,
+        pre_y=pre_viajes_hacia,
+        trans_y=trans_viajes_hacia,
+        tot_y=tot_viajes_hacia,
+        post_y=post_viajes_hacia
     )
-    plt.legend(prop=font)
-    img = BytesIO()
-    fig.savefig(img, dpi=120)
-    img.seek(0)
-    queue[8] = True
     return send_file(img, mimetype='image/png')
 
 @app.route('/')
@@ -1107,12 +873,7 @@ def comuna_select(select):
     descripcion = q_comuna['Detalle']
     dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
 
-    dates = [
-        date_headers(ct, pre_fechas),
-        date_headers(ct, trans_fechas),
-        date_headers(ct, tot_fechas),
-        date_headers(ct, post_fechas)
-    ]
+    dates = [date_headers(ct, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
     pre_fechas_line = pre_fechas + trans_fechas
@@ -1144,18 +905,12 @@ def comuna_select(select):
         text_1 = interpretar_1(pre_x, pre_y, post_x, post_y)
 
     dia_inicio, dia_termino, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
-    dates = [
-        date_headers(ca, pre_fechas),
-        date_headers(ca, trans_fechas),
-        date_headers(ca, tot_fechas),
-        date_headers(ca, post_fechas)
-    ]
+    dates = [date_headers(ca, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
     pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [string_to_date(i) for i in x], dates)
     pre_fechas_line = pre_fechas + trans_fechas
     post_fechas_line = tot_fechas + post_fechas
     if len(pre_fechas_line) == 0 or len(post_fechas_line) == 0:
-        print(pre_fechas_line, post_fechas_line)
         text_2 = """No hay suficientes datos desde la instauración de la cuarentena para analizar la evolución de 
         esta variable."""
         text_3 = text_2
@@ -1179,22 +934,13 @@ def comuna_select(select):
         text_3 = interpretar_3(pre_x, pre_y, post_x, post_y, pre_fechas_line, post_fechas_line)
 
     _, _, pre_fechas, trans_fechas, tot_fechas, post_fechas = get_fechas(q_comuna)
-    dates = [
-        SE_headers(cn, pre_fechas),
-        SE_headers(cn, trans_fechas),
-        SE_headers(cn, tot_fechas),
-        SE_headers(cn, post_fechas)
-    ]
+    dates = [SE_headers(cn, x) for x in [pre_fechas, trans_fechas, tot_fechas, post_fechas]]
     pre_query, trans_query, tot_query, post_query = map(headers_to_col_query, dates)
-    pre_fechas = [SE_to_date(i) for i in dates[0]]
-    trans_fechas = [SE_to_date(i) for i in dates[1]]
-    tot_fechas = [SE_to_date(i) for i in dates[2]]
-    post_fechas = [SE_to_date(i) for i in dates[3]]
+    pre_fechas, trans_fechas, tot_fechas, post_fechas = map(lambda x: [SE_to_date(i) for i in dates[x]], range(4))
     pre_fechas_line = pre_fechas + trans_fechas
     post_fechas_line = tot_fechas + post_fechas
 
     if len(pre_fechas_line) == 0 or len(post_fechas_line) == 0:
-        print(pre_fechas_line, post_fechas_line)
         text_4 = """No hay suficientes datos desde la instauración de la cuarentena para analizar la evolución de 
         esta variable."""
         text_5 = text_2
